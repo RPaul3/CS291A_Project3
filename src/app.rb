@@ -130,14 +130,7 @@ post '/message' do
 				           "event" => "Message", 
 				           "id" => SecureRandom.uuid
 				           }
-=begin
-				    "event: Message\n" + 
-				           "created: #{Time.now}\n" +
-             		       "message: #{params[:message]}\n"+
-             		       "id: #{SecureRandom.uuid}\n"
-=end
-					#msgHist << msg
-             		out << msg.to_s
+             		out << msg.to_json.gsub('\\', '') + "\n"
              		 
 				  end
   				body "message received\n"
@@ -172,20 +165,13 @@ get '/stream/:token', provides: 'text/event-stream' do
 			end
 
 
-			#broadcast join event to all connected users 
-			connections.each do |out|
-				msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+			#broadcast join event to all connected users
+			msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
 				           "event" => "Join", 
 				           "id" => SecureRandom.uuid
-				      }
-=begin
-			    msg =  "event: Join\n" + 
-			    	   "created: #{Time.now}\n" +
-         		       "user: #{user}\n" +
-         		       "id: #{SecureRandom.uuid}\n"
-=end         	#msgHist << msg		
-         		out << msg.to_s
-     			
+				      } 
+			connections.each do |out|	
+         		out << msg.to_json.gsub('\\', '') + "\n"		
 			end
 
 			#Give a list of users to new connected user
@@ -193,17 +179,13 @@ get '/stream/:token', provides: 'text/event-stream' do
 				connections << out
 				userConnections[user] = out
 				EventMachine::PeriodicTimer.new(20) { out << "\0" }
+
 				msg = {"data" => {"created" => Time.now, "users" => userConnections.keys}.to_json,
 				           "event" => "Users", 
 				           "id" => SecureRandom.uuid
 				      }
-=begin
-				msg = "event: Users\n" + 
-				       "created: #{Time.now}\n" +
-             		   "users: #{userConnections.keys}\n"+
-             		   "id: #{SecureRandom.uuid}\n"
-=end  			#msgHist << msg
-             	out << msg.to_s
+				out << msg.to_json.gsub('\\', '') + "\n"
+
          		
 
              	#handle user parts
@@ -215,14 +197,8 @@ get '/stream/:token', provides: 'text/event-stream' do
 				             "event" => "Users", 
 				             "id" => SecureRandom.uuid
 				      }
-=begin
-				      rest << "event: Part\n" + 
-				      	      "created: #{Time.now}\n" +
-	         		          "user: #{user}\n" +
-	         		          "id: #{SecureRandom.uuid}\n"
-=end
-					#msgHist << msg
-					rest << msg.to_s
+
+					rest << msg.to_json.gsub('\\', '') + "\n"
 					
 				  end
 			    end
