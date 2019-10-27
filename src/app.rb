@@ -39,6 +39,10 @@ connections = []
 users = []
 userConnections = Hash.new
 msgHist = RingBuffer.new(100)
+msgHist << {"data" => {"created" => Time.now, "status" => "started" }.to_json,
+				           "event" => "ServerStatus", 
+				           "id" => SecureRandom.uuid
+				           }
 
 def encode username
   JWT.encode payload(username), ENV['JWT_SECRET'], 'HS256'
@@ -67,7 +71,7 @@ end
 
 options "*" do
 	response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
-	response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
+	response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, HTTP_LAST_EVENT_ID"
 	response.headers["Access-Control-Allow-Origin"] = "*"
 	200
 end
@@ -156,53 +160,95 @@ get '/stream/:token', provides: 'text/event-stream' do
 			decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, { algorithm: 'HS256' }
 			user = decoded_token[0]["data"]["username"]
 			puts user
+			
 
 			#check if user is already connected, if so, disconnect the first conncection
 			if userConnections[user]
-				userConnections[user] << "event: Disconnect\n" +
-										 "created: #{Time.now}\n"
+
+				#close old conn and send disconnect msg
+				msg = {"data" => {"created" => Time.now}.to_json,
+				           "event" => "Disconnect", 
+				           "id" => SecureRandom.uuid
+				      }
+				userConnections[user] << msg.to_json.gsub('\\', '') + "\n"
 				userConnections[user].close
+				connections.delete(userConnections[user])
+				userConnections.delete(user)
+				msgHist << msg
+
+				#start a new connection for that user
+				stream(:keep_open) do |out|
+					connections << out
+					userConnections[user] = out
+					EventMachine::PeriodicTimer.new(20) { out << "\0" }
+					#handle user parts
+	             	out.callback do
+					      puts user + ' stream closed'
+					      connections.delete(out)
+					      userConnections.delete(user)
+					      users.delete(user)
+		      			  connections.each do |rest|
+		      			  	  msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+						             "event" => "Part", 
+						             "id" => SecureRandom.uuid
+						      }
+
+							rest << msg.to_json.gsub('\\', '') + "\n"
+							msgHist << msg
+							
+						  end
+				    end
+				end
+			
+
+			else
+					#broadcast join event to all connected users
+					msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+						           "event" => "Join", 
+						           "id" => SecureRandom.uuid
+						      } 
+					connections.each do |out|	
+		         		out << msg.to_json.gsub('\\', '') + "\n"		
+					end
+					msgHist << msg
+				
+
+				#Give a list of users to new connected user
+				stream(:keep_open) do |out|
+					connections << out
+					userConnections[user] = out
+					EventMachine::PeriodicTimer.new(20) { out << "\0" }
+
+					msg = {"data" => {"created" => Time.now, "users" => userConnections.keys}.to_json,
+					           "event" => "Users", 
+					           "id" => SecureRandom.uuid
+					      }
+					out << msg.to_json.gsub('\\', '') + "\n"
+					msgHist << msg
+
+	         		
+
+	             	#handle user parts
+	             	out.callback do
+					      puts user + ' stream closed'
+					      connections.delete(out)
+					      userConnections.delete(user)
+					      users.delete(user)
+		      			  connections.each do |rest|
+		      			  	  msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+						             "event" => "Part", 
+						             "id" => SecureRandom.uuid
+						      }
+
+							rest << msg.to_json.gsub('\\', '') + "\n"
+							msgHist << msg
+							
+						  end
+				    end
+				end
 			end
 
-
-			#broadcast join event to all connected users
-			msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
-				           "event" => "Join", 
-				           "id" => SecureRandom.uuid
-				      } 
-			connections.each do |out|	
-         		out << msg.to_json.gsub('\\', '') + "\n"		
-			end
-
-			#Give a list of users to new connected user
-			stream(:keep_open) do |out|
-				connections << out
-				userConnections[user] = out
-				EventMachine::PeriodicTimer.new(20) { out << "\0" }
-
-				msg = {"data" => {"created" => Time.now, "users" => userConnections.keys}.to_json,
-				           "event" => "Users", 
-				           "id" => SecureRandom.uuid
-				      }
-				out << msg.to_json.gsub('\\', '') + "\n"
-
-         		
-
-             	#handle user parts
-             	out.callback do
-			      puts user + ' stream closed'
-			      connections.delete(out)
-      			  connections.each do |rest|
-      			  	  msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
-				             "event" => "Users", 
-				             "id" => SecureRandom.uuid
-				      }
-
-					rest << msg.to_json.gsub('\\', '') + "\n"
-					
-				  end
-			    end
-			end
+			
 
 
 		else
