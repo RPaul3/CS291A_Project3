@@ -77,12 +77,6 @@ options "*" do
 end
 
 
-
-get '/' do
-	"hellow"
-end
-
-
 post '/login' do
 
 	if !params[:username] || !params[:password]
@@ -170,7 +164,7 @@ get '/stream/:token', provides: 'text/event-stream' do
 				           "event" => "Disconnect", 
 				           "id" => SecureRandom.uuid
 				      }
-				userConnections[user] << msg.to_json.gsub('\\', '') + "\n"
+				userConnections[user] << msg.to_json.gsub('\\', '') + "\n\n"
 				userConnections[user].close
 				connections.delete(userConnections[user])
 				userConnections.delete(user)
@@ -187,13 +181,15 @@ get '/stream/:token', provides: 'text/event-stream' do
 					      connections.delete(out)
 					      userConnections.delete(user)
 					      users.delete(user)
+					      id = SecureRandom.uuid
+					      time = Time.now
 		      			  connections.each do |rest|
-		      			  	  msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+		      			  	  msg = {"data" => {"created" => time, "user" => user}.to_json,
 						             "event" => "Part", 
-						             "id" => SecureRandom.uuid
+						             "id" => id
 						      }
 
-							rest << msg.to_json.gsub('\\', '') + "\n"
+							rest << "event:Part\n" + "data:" + ({"created" => time, "user" => user}.to_json) + "\n" + "id:#{id}\n\n"
 							msgHist << msg
 							
 						  end
@@ -203,12 +199,14 @@ get '/stream/:token', provides: 'text/event-stream' do
 
 			else
 					#broadcast join event to all connected users
-					msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+					id = SecureRandom.uuid
+					time = Time.now
+					msg = {"data" => {"created" => time, "user" => user}.to_json,
 						           "event" => "Join", 
-						           "id" => SecureRandom.uuid
+						           "id" => id
 						      } 
 					connections.each do |out|	
-		         		out << msg.to_json.gsub('\\', '') + "\n"		
+		         		out << "event:Join\n" + "data:" + ({"created" => time, "user" => user}.to_json) + "\n" + "id:#{id}\n\n"		
 					end
 					msgHist << msg
 				
@@ -219,11 +217,13 @@ get '/stream/:token', provides: 'text/event-stream' do
 					userConnections[user] = out
 					EventMachine::PeriodicTimer.new(20) { out << "\0" }
 
-					msg = {"data" => {"created" => Time.now, "users" => userConnections.keys}.to_json,
+					id = SecureRandom.uuid
+					time = Time.now
+					msg = {"data" => {"created" => time, "users" => userConnections.keys}.to_json,
 					           "event" => "Users", 
-					           "id" => SecureRandom.uuid
+					           "id" => id
 					      }
-					out << msg.to_json.gsub('\\', '') + "\n"
+					out << "event:Users\n" + "data:" + ({"created" => time, "users" => userConnections.keys}.to_json) + "\n" + "id:#{id}\n\n"	
 					msgHist << msg
 
 	         		
@@ -234,13 +234,15 @@ get '/stream/:token', provides: 'text/event-stream' do
 					      connections.delete(out)
 					      userConnections.delete(user)
 					      users.delete(user)
+					      id = SecureRandom.uuid
+						  time = Time.now
 		      			  connections.each do |rest|
-		      			  	  msg = {"data" => {"created" => Time.now, "user" => user}.to_json,
+		      			  	  msg = {"data" => {"created" => time, "user" => user}.to_json,
 						             "event" => "Part", 
-						             "id" => SecureRandom.uuid
+						             "id" => id
 						      }
 
-							rest << msg.to_json.gsub('\\', '') + "\n"
+							rest << "event:Users\n" + "data:" + ({"created" => time, "user" => user}.to_json) + "\n" + "id:#{id}\n\n"
 							msgHist << msg
 							
 						  end

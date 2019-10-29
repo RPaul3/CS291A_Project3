@@ -8,6 +8,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Chip from '@material-ui/core/Chip';  
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import {CTX} from './store'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -42,8 +43,30 @@ const useStyles = makeStyles(theme => ({
 
 }));
 
+function sendMessage(value, token){
+
+  console.log("The passed in token is " + token)
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", 'http://localhost:4567/message', true);
+  var FD  = new FormData();
+  FD.append('message', value);
+  xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  xhr.onreadystatechange = () => {
+    if (xhr.readyState === 4 && xhr.status === 201) {
+       console.log("Message received:" + value)
+    }
+  };
+    xhr.send(FD);
+
+}
+
+
 export default function Dashboard() {
   const classes = useStyles();
+  const state = React.useContext(CTX);
+  //const msgAdder = state.addMsg;
+  //var js = JSON.parse(state.msg)
+  //console.log(state.msg[Object.keys(state.msg)[0]].event);
   const [textValue, changeTextValue] = React.useState('');
 
   return (
@@ -52,7 +75,7 @@ export default function Dashboard() {
         <Typography variant="h5" component="h3">
           Chat App
         </Typography>
-
+ 
         <Typography component="p">
           Placeholder
         </Typography>
@@ -61,7 +84,7 @@ export default function Dashboard() {
           <div className={classes.userWindow}>
             <List>
             {
-              ['user1'].map(user => 
+              state.user.map(user => 
               (
                 <ListItem key = {user} button>
                   <ListItemText primary= {user} />
@@ -78,10 +101,10 @@ export default function Dashboard() {
           <div className={classes.chatWindow}>
 
           {
-            [{from: "user", msg: "hello"}].map((chat, i) => (
+            state.msg.map((chat, i) => (
               <div className={classes.flex} key={i}>
-                <Chip label={chat.from} className={classes.chip} />
-                <Typography component="p">{chat.msg}</Typography>
+                <Chip label={chat.user} className={classes.chip} />
+                <Typography component="p">{chat.created} {chat.event} {chat.user} {chat.message} {chat.status} </Typography>
               </div>
               ))
           }
@@ -96,7 +119,17 @@ export default function Dashboard() {
           onChange={e => changeTextValue(e.target.value)}
         />
 
-        <Button variant="contained" color="primary" className={classes.button}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          className={classes.button}
+          onClick ={() => {
+            {sendMessage(textValue, state.authToken)};
+            changeTextValue('');
+          }
+
+          } 
+        >
           Send
         </Button>
 
