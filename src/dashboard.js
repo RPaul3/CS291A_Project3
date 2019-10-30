@@ -9,6 +9,7 @@ import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import {CTX} from './store'
+import Counter from './counter'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -24,13 +25,15 @@ const useStyles = makeStyles(theme => ({
   userWindow:{
     width:'30%',
     height: '500px',
-    borderRight: '1px solid black'
+    borderRight: '1px solid black',
+    overflowY: 'scroll'
   },
 
   chatWindow:{
     width:'70%',
     height: '500px',
-    padding:'30px'
+    padding:'30px',
+    overflowY: 'scroll'
   },
 
   chatBox:{
@@ -45,7 +48,7 @@ const useStyles = makeStyles(theme => ({
 
 function sendMessage(value, token){
 
-  console.log("The passed in token is " + token)
+  //console.log("The passed in token is " + token)
   var xhr = new XMLHttpRequest();
   xhr.open("POST", 'http://localhost:4567/message', true);
   var FD  = new FormData();
@@ -53,7 +56,7 @@ function sendMessage(value, token){
   xhr.setRequestHeader('Authorization', `Bearer ${token}`);
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4 && xhr.status === 201) {
-       console.log("Message received:" + value)
+       console.log("Message sent:" + value)
     }
   };
     xhr.send(FD);
@@ -64,9 +67,6 @@ function sendMessage(value, token){
 export default function Dashboard() {
   const classes = useStyles();
   const state = React.useContext(CTX);
-  //const msgAdder = state.addMsg;
-  //var js = JSON.parse(state.msg)
-  //console.log(state.msg[Object.keys(state.msg)[0]].event);
   const [textValue, changeTextValue] = React.useState('');
 
   return (
@@ -77,10 +77,15 @@ export default function Dashboard() {
         </Typography>
  
         <Typography component="p">
-          Placeholder
+          CS291A
         </Typography>
 
+        {state.showCounter ?  
+          <Counter/> :  null 
+        } 
+        
         <div className={classes.flex}>
+          
           <div className={classes.userWindow}>
             <List>
             {
@@ -97,9 +102,9 @@ export default function Dashboard() {
             </List>
 
           </div>
-
+          
           <div className={classes.chatWindow}>
-
+            
           {
             state.msg.map((chat, i) => (
               <div className={classes.flex} key={i}>
@@ -108,8 +113,9 @@ export default function Dashboard() {
               </div>
               ))
           }
-
+          
           </div>
+
         </div>
 
         <TextField  

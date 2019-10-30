@@ -1,31 +1,33 @@
 import React from 'react'
 
 export const CTX = React.createContext({
-    msg:[{"event":"ServerStatus", "created":"2019-10-28 03:16:10 -0700", "user":"", "message":"", "status":"started"}
-    ,{"event":"ServerStatus", "created":"2019-10-28 03:16:10 -0900", "user":"", "message":"", "status":"startedAgain"}],
-    user:["user1", "Sekiro", "Gehrman"],
+    msg:[],
+    user:[],
     addMsg: () => {},
     addUser: () => {},
     deleteUser: () => {},
     setToken:() => {},
-    authToken:''
+    setShowCounter:() => {},
+    messageCounterAdder:() => {},
+    authToken:'',
+    messageCounter:0,
+    showCounter:false
 });
 
-
-/*
-function reducer(state, action){
-		return{ 
-			...state,
-	        arr: [...state.arr, action.newItem]
-		}
-}
-*/
 
 function sendChatAction(value){
 
 }
 
 export default function Store(props){
+
+	const setShowCounter = () => {
+		state.showCounter = !state.showCounter
+	}
+
+	const messageCounterAdder = () =>{
+		state.messageCounter = state.messageCounter+1
+	}
 
 	const addMsg = (newMsg) =>{
 		var newArray = state.msg;
@@ -44,19 +46,24 @@ export default function Store(props){
 	}
 
 	const deleteUser = (partedUser) =>{
-		var newState = {...state} 
-		newState.user = newState.user.filter(user => user !== partedUser)
-		setState({newState})
+		var newArray = state.user; 
+		var index = newArray.indexOf(partedUser);
+		if (index !== -1) newArray.splice(index, 1);
+		setState({...state, user:newArray})
 	}
 
 	const initState = {
-		msg:[{"event":"ServerStatus", "created":"2019-10-28 03:16:10 -0700", "user":"", "message":"", "status":"started"}
-    	,{"event":"ServerStatus", "created":"2019-10-28 03:16:10 -0900", "user":"", "message":"", "status":"startedAgain"}],	    
-        user:["user1", "Sekiro", "Gehrman"],
+		msg:[],	    
+        user:[],
 	    addMsg: addMsg,
 	    addUser: addUser,
 	    setToken: setToken,
-	    authToken:''
+	    setShowCounter: setShowCounter,
+	    deleteUser:deleteUser,
+	    messageCounterAdder:messageCounterAdder,
+	    authToken:'',
+	    messageCounter:0,
+	    showCounter:false
 	}
 
 
