@@ -87,6 +87,7 @@ export default function Dashboard() {
         <div className={classes.flex}>
           
           <div className={classes.userWindow}>
+            Online
             <List>
             {
               state.user.map(user => 

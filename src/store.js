@@ -3,6 +3,7 @@ import React from 'react'
 export const CTX = React.createContext({
     msg:[],
     user:[],
+    clearUsers: () => {},
     addMsg: () => {},
     addUser: () => {},
     deleteUser: () => {},
@@ -15,14 +16,19 @@ export const CTX = React.createContext({
 });
 
 
-function sendChatAction(value){
-
-}
 
 export default function Store(props){
 
+	const clearUsers = () =>{
+		console.log("before call user " + state.user.length)
+		state.user = []
+		console.log("after call user " + state.user.length)
+	}
+
 	const setShowCounter = () => {
+		console.log("before call stateCounter " + state.showCounter)
 		state.showCounter = !state.showCounter
+		console.log("after call stateCounter " + state.showCounter)
 	}
 
 	const messageCounterAdder = () =>{
@@ -55,6 +61,7 @@ export default function Store(props){
 	const initState = {
 		msg:[],	    
         user:[],
+        clearUsers: clearUsers,
 	    addMsg: addMsg,
 	    addUser: addUser,
 	    setToken: setToken,

@@ -18,6 +18,7 @@ constructor(props) {
  }
 
 
+
  startEventSource(token) {
   
   console.log("eventSource started")
@@ -27,20 +28,32 @@ constructor(props) {
   const messageAdder = this.context.addMsg
   const userAdder = this.context.addUser
   const userDeleter = this.context.deleteUser
-  
-  
+  const setShowCounter = this.context.setShowCounter
+  const messageCounterAdder = this.context.messageCounterAdder
+  const clearUsers = this.context.clearUsers
   
    this.eventSource.addEventListener("Disconnect", e =>{
-	var jsonData = JSON.parse(e.data)
-	messageAdder({"event":"Disconnect", "created":`${jsonData.created}`, "user":"", "users":"", "message":"", "status":""})
-	console.log("Disconnect")
+	  var jsonData = JSON.parse(e.data)
+  	messageAdder({"event":"Disconnect", "created":`${jsonData.created}`, "user":"", "users":"", "message":"", "status":""})
+  	console.log("Disconnect")
+    this.eventSource.close()
+    
+    clearUsers()
+    console.log("curr u are " + this.context.user.length)
+    
+    
+    console.log("show is before " + this.context.showCounter)
+    setShowCounter()
+    console.log("show is after " + this.context.showCounter)
+    this.props.handleSubmit()
 	}	
-   );
+   ); 
 
     this.eventSource.addEventListener("Message", e =>{
     	var jsonData = JSON.parse(e.data)
 		messageAdder({"event":"Message", "created":`${jsonData.created}`, "user":`${jsonData.user}`, "users":"", "message":`${jsonData.message}`, "status":""})
-		console.log("Message from: " + jsonData.user )  
+		messageCounterAdder()
+    console.log("Message from: " + jsonData.user )  
 		}  
 
 	);
@@ -56,21 +69,27 @@ constructor(props) {
     this.eventSource.addEventListener("Part", e =>{
       var jsonData = JSON.parse(e.data)
       messageAdder({"event":"Part", "created":`${jsonData.created}`, "user":`${jsonData.user}`, "users":"", "message":"", "status":""})
-	  console.log("Part") }
+	    userDeleter(jsonData.user)
+      console.log("Part") }
 
 	   );
 
     this.eventSource.addEventListener("ServerStatus", e =>{
 	  var jsonData = JSON.parse(e.data)
       messageAdder({"event":"ServerStatus", "created":`${jsonData.created}`, "user":"", "users":"", "message":"", "status":"server started"})
-	  console.log("ServerStatus") 
+	    console.log("ServerStatus") 
 	}
    );
 
     this.eventSource.addEventListener("Users", e =>{
       var jsonData = JSON.parse(e.data)
       messageAdder({"event":"Users", "created":`${jsonData.created}`, "user":"", "users":`jsonData.users`, "message":"", "status":""})
-	  console.log("Users")
+	    var users = jsonData.users
+      for(var i = 0; i < users.length; i++){
+        console.log("add " + i)
+        userAdder(users[i])
+      }
+       console.log("Users")
 	}
     );
 }
@@ -84,12 +103,11 @@ constructor(props) {
  }
 
 handleSubmit(event){
-	
+	const setShowCounter = this.context.setShowCounter
 	event.preventDefault();
 	//this.props.handleSubmit(this.state.username, this.state.password);
     var xhr = new XMLHttpRequest();
     var FD  = new FormData();
-    var tk = '';
     FD.append('username', this.state.username);
     FD.append('password', this.state.password);
     
@@ -101,6 +119,7 @@ handleSubmit(event){
        var jsonResponse = JSON.parse(xhr.responseText);
        this.startEventSource(jsonResponse["token"]);
        tokenSetter(jsonResponse["token"])
+       setShowCounter()
     }
   };
     xhr.send(FD);
