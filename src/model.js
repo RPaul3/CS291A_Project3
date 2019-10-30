@@ -22,8 +22,8 @@ constructor(props) {
  startEventSource(token) {
   
   console.log("eventSource started")
-  //this.eventSource = new EventSource(`http://chat.cs291.com/stream/${token}`);
-  this.eventSource = new EventSource(`http://localhost:4567/stream/${token}`);
+  this.eventSource = new EventSource(`http://chat.cs291.com/stream/${token}`);
+  //this.eventSource = new EventSource(`http://localhost:4567/stream/${token}`);
   const msg = this.context.msg
   
   const messageAdder = this.context.addMsg
@@ -116,8 +116,8 @@ handleSubmit(event){
     FD.append('password', this.state.password);
     
     
-    //xhr.open("POST", 'http://chat.cs291.com/login', true);
-    xhr.open("POST", 'http://localhost:4567/login', true);
+    xhr.open("POST", 'http://chat.cs291.com/login', true);
+    //xhr.open("POST", 'http://localhost:4567/login', true);
     xhr.onreadystatechange = (tokenSetter) => {
     if (xhr.readyState === 4 && xhr.status === 201) {
     	const tokenSetter = this.context.setToken
