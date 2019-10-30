@@ -50,12 +50,14 @@ function sendMessage(value, token){
 
   //console.log("The passed in token is " + token)
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", 'http://localhost:4567/message', true);
+  xhr.open("POST", 'http://chat.cs291.com/message', true);
+  //xhr.open("POST", 'http://localhost:4567/message', true);
   var FD  = new FormData();
   FD.append('message', value);
   xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  //xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
   xhr.onreadystatechange = () => {
-    if (xhr.readyState === 4 && xhr.status === 201) {
+    if (xhr.readyState === 4 && xhr.status === 201) { 
        console.log("Message sent:" + value)
     }
   };

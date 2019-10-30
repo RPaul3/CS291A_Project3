@@ -22,6 +22,7 @@ constructor(props) {
  startEventSource(token) {
   
   console.log("eventSource started")
+  //this.eventSource = new EventSource(`http://chat.cs291.com/stream/${token}`);
   this.eventSource = new EventSource(`http://localhost:4567/stream/${token}`);
   const msg = this.context.msg
   
@@ -61,7 +62,10 @@ constructor(props) {
     this.eventSource.addEventListener("Join", e =>{
       var jsonData = JSON.parse(e.data)
       messageAdder({"event":"Join", "created":`${jsonData.created}`, "user":`${jsonData.user}`, "users":"", "message":"", "status":""})
-      userAdder(jsonData.user)
+      if (!this.context.user.includes(jsonData.user)){
+        userAdder(jsonData.user)
+      }
+        
 	  console.log("Join")    
 	  }
     );
@@ -86,7 +90,7 @@ constructor(props) {
       messageAdder({"event":"Users", "created":`${jsonData.created}`, "user":"", "users":`jsonData.users`, "message":"", "status":""})
 	    var users = jsonData.users
       for(var i = 0; i < users.length; i++){
-        console.log("add " + i)
+        console.log("add " + (users[i]))
         userAdder(users[i])
       }
        console.log("Users")
@@ -112,6 +116,7 @@ handleSubmit(event){
     FD.append('password', this.state.password);
     
     
+    //xhr.open("POST", 'http://chat.cs291.com/login', true);
     xhr.open("POST", 'http://localhost:4567/login', true);
     xhr.onreadystatechange = (tokenSetter) => {
     if (xhr.readyState === 4 && xhr.status === 201) {
